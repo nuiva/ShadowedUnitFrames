@@ -12,6 +12,7 @@ function Auras:OnEnable(frame)
 
 	frame:RegisterNormalEvent("PLAYER_ENTERING_WORLD", self, "Update")
 	frame:RegisterUnitEvent("UNIT_AURA", self, "Update")
+	frame:RegisterUnitEvent("UNIT_INVENTORY_CHANGED", self, "Update") -- Should fix poison buff bug
 	frame:RegisterUpdateFunc(self, "Update")
 
 	self:UpdateFilter(frame)

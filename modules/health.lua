@@ -33,12 +33,23 @@ function Health:OnEnable(frame)
 		frame.healthBar = ShadowUF.Units:CreateBar(frame)
 	end
 
-	frame:RegisterUnitEvent("UNIT_HEALTH", self, "Update")
+	--frame:RegisterUnitEvent("UNIT_HEALTH", self, "Update")
 	frame:RegisterUnitEvent("UNIT_MAXHEALTH", self, "Update")
 	frame:RegisterUnitEvent("UNIT_CONNECTION", self, "Update")
 	frame:RegisterUnitEvent("UNIT_FACTION", self, "UpdateColor")
-	frame:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", self, "Update")
+	--frame:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", self, "Update")
 	frame:RegisterUnitEvent("UNIT_TARGETABLE_CHANGED", self, "UpdateColor")
+	local LibCLHealth = LibStub("LibCombatLogHealth-1.0")
+	if LibCLHealth then
+		--f:UnregisterEvent("UNIT_HEALTH")
+		LibCLHealth.RegisterCallback(frame, "COMBAT_LOG_HEALTH", function(e, u)
+			if UnitGUID(frame.unit) == UnitGUID(u) then
+				--self:Update(frame)
+				frame:FullUpdate()
+			end
+		end)
+		--frame:RegisterUnitEvent("COMBAT_LOG_HEALTH", self, "Update")
+	end
 
 	if( frame.unit == "pet" ) then
 		frame:RegisterUnitEvent("UNIT_POWER_UPDATE", self, "UpdateColor")

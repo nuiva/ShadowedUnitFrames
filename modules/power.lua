@@ -16,6 +16,50 @@ function Power:OnEnable(frame)
 	-- run an update after returning to life
 	if ( frame.unit == "player" ) then
 		frame:RegisterNormalEvent("PLAYER_UNGHOST", self, "Update")
+		if not frame.powerBar.tickMark then
+			local t = frame.powerBar:CreateTexture(nil, "OVERLAY")
+			frame.powerBar.tickMark = t
+			t:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
+			t:SetPoint("CENTER", frame.powerBar, "LEFT", 0, 0)
+			t:SetWidth(5)
+			t:SetHeight(frame.powerBar:GetHeight() * 1.5)
+			t:SetBlendMode("ADD")
+			local ag = t:CreateAnimationGroup()
+			t.animation = ag:CreateAnimation("Translation")
+			t.animation:SetDuration(2)
+			t.animation:SetOffset(frame.powerBar:GetWidth(), 0)
+			ag:SetLooping("REPEAT")
+			ag:Play()
+			t:Show()
+			LibManaTicks:RegisterCallback("ManaTickAlways", function() ag:Restart() end)
+		end
+		if not frame.powerBar.pauseMark then
+			local t = frame.powerBar:CreateTexture(nil, "OVERLAY")
+			t:Hide()
+			frame.powerBar.pauseMark = t
+			t:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
+			t:SetPoint("CENTER", frame.powerBar, "RIGHT", 0, 0)
+			t:SetWidth(10)
+			t:SetHeight(frame.powerBar:GetHeight() * 1.5)
+			t:SetBlendMode("ADD")
+			t:SetVertexColor(1,0,0)
+			local ag = t:CreateAnimationGroup()
+			t.animation = ag:CreateAnimation("Translation")
+			t.animation:SetDuration(5)
+			t.animation:SetOffset(-frame.powerBar:GetWidth(), 0)
+			LibManaTicks:RegisterCallback("Spellcast", function()
+				t:Show()
+				ag:Restart()
+			end)
+			ag:SetScript("OnFinished", function() t:Hide() end)
+		end
+		frame.powerBar:HookScript("OnSizeChanged", function(self, width, height)
+			local h = height * 1.5
+			self.tickMark:SetHeight(h)
+			self.pauseMark:SetHeight(h)
+			self.tickMark.animation:SetOffset(width, 0)
+			self.pauseMark.animation:SetOffset(-width, 0)
+		end)
 	end
 
 	-- UNIT_MANA fires after repopping at a spirit healer, make sure to update powers then

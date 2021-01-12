@@ -1268,8 +1268,6 @@ function Units:CreateBar(parent)
 	bar.parent = parent
 
 	bar.background = bar:CreateTexture(nil, "BORDER")
-	bar.background:SetHeight(1)
-	bar.background:SetWidth(1)
 	bar.background:SetAllPoints(bar)
 	bar.background:SetHorizTile(false)
 

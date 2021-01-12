@@ -4,7 +4,12 @@
 ShadowUF = select(2, ...)
 ShadowUF.API = {}
 
+local LibCLHealth = LibStub("LibCombatLogHealth-1.0")
+
 ShadowUF.API.UnitHealth = function(unit)
+	if LibCLHealth then
+		return LibCLHealth.UnitHealth(unit)
+	end
 	if RealMobHealth then
 		local cur, max = RealMobHealth.GetUnitHealth(unit)
 		if cur then return cur end
