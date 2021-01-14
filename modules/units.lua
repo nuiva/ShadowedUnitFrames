@@ -338,9 +338,14 @@ local function updateChildUnits(...)
 end
 
 local function createFakeUnitUpdateTimer(frame)
-	if( not frame.updateTimer ) then
+	frame:SetScript("OnUpdate", function(self)
+		if UnitExists(self.unit) then
+			self:FullUpdate()
+		end
+	end)
+	--[[if( not frame.updateTimer ) then
 		frame.updateTimer = C_Timer.NewTicker(0.5, function() if( UnitExists(frame.unit) ) then frame:FullUpdate() end end)
-	end
+	end]]
 end
 
 -- Attribute set, something changed
