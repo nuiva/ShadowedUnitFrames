@@ -15,7 +15,7 @@ local callbacks = lib.callbacks or LibStub("CallbackHandler-1.0"):New(lib)
 local frame = CreateFrame("Frame")
 
 local errorThreshold = 100 -- If health error is larger, the cache is flushed
-local healthDiffLifetime = 2 -- Time in seconds how long health diffs are considered valid
+local healthDiffLifetime = 1 -- Time in seconds how long health diffs are considered valid
 local unitLifetime = 60 -- Time in seconds until units are removed from memory
 
 local function createClass(a)
@@ -46,7 +46,10 @@ local function getAllUnits()
 		local prefix = IsInRaid() and "raid" or "party"
 		for i = 1,GetNumGroupMembers() do
 			local u = prefix .. i
-			a[UnitGUID(u)] = u
+			local guid = UnitGUID(u)
+			if guid then
+				a[UnitGUID(u)] = u
+			end
 		end
 	end
 	return a
@@ -55,6 +58,7 @@ end
 local Unit = createClass({
 	constructor = function(self, unitId)
 		self.guid = UnitGUID(unitId)
+		self.lastUnitId = unitId
 		self.lastHealth = UnitHealth(unitId)
 		self.healthDiffs = {}
 		self.lastSeen = GetTime()
@@ -71,14 +75,12 @@ local Unit = createClass({
 		local n = #self.healthDiffs
 		local closest = {math.huge}
 		for i = 1,n do
-			if t - self.healthDiffs[i].t < healthDiffLifetime then -- Skip old entries, they should get eventually deleted below
-				local sum = 0
-				for j = i,n do
-					sum = sum + self.healthDiffs[j].d
-					local abs_error = math.abs(sum - d)
-					if abs_error < closest[1] then
-						closest = {abs_error, i, j}
-					end
+			local sum = 0
+			for j = i,n do
+				sum = sum + self.healthDiffs[j].d
+				local abs_error = math.abs(sum - d)
+				if abs_error < closest[1] then
+					closest = {abs_error, i, j}
 				end
 			end
 		end
@@ -87,7 +89,6 @@ local Unit = createClass({
 		elseif math.abs(d) > errorThreshold then
 			self.healthDiffs = {}
 		end
-		callbacks:Fire("COMBAT_LOG_HEALTH", unitId, "UNIT_HEALTH")
 	end,
 	COMBAT_LOG_EVENT_UNFILTERED = function(self, cleu)
 		local handler = self.cleuHandlers[cleu[2]]
@@ -113,11 +114,14 @@ local Unit = createClass({
 		end
 	end,
 	fireClhCallbacks = function(self)
-		for guid,unitId in pairs(getAllUnits()) do
-			if guid == self.guid then
-				callbacks:Fire("COMBAT_LOG_HEALTH", unitId)
-			end
+		if UnitGUID(self.lastUnitId) == self.guid then
+			callbacks:Fire("COMBAT_LOG_HEALTH", self.lastUnitId)
 			return
+		end
+		local unitId = getAllUnits()[self.guid]
+		if unitId then
+			callbacks:Fire("COMBAT_LOG_HEALTH", unitId)
+			self.lastUnitId = unitId
 		end
 	end,
 	getHealth = function(self, unitId)
@@ -167,17 +171,17 @@ local Unit = createClass({
 local units = {
 	add = function(self, unitId)
 		local guid = UnitGUID(unitId)
-		if self.units[guid] == nil then
+		if guid and self.units[guid] == nil then
 			self.units[guid] = Unit:new(unitId)
 		end
 	end,
 	purgeExpired = function(self)
 		local t = GetTime()
-		for _,unitId in pairs(getAllUnits()) do
-			local guid = UnitGUID(unitId)
+		for guid,unitId in pairs(getAllUnits()) do
 			local u = self.units[guid]
 			if u then
 				u.lastSeen = t
+				u.lastUnitId = unitId
 			end
 		end
 		local toRemove = {}
@@ -227,6 +231,7 @@ frame.eventHandlers = {
 		if u then
 			u:UNIT_HEALTH(unitId)
 		end
+		callbacks:Fire("COMBAT_LOG_HEALTH", unitId, "UNIT_HEALTH")
 	end,
 }
 frame:SetScript("OnEvent", function(self, event, ...)
@@ -250,11 +255,11 @@ end
 -- end
 
 function callbacks.OnUsed()
-    frame:RegisterEvent"GROUP_ROSTER_UPDATE"
-    frame:RegisterEvent"PLAYER_LOGIN"
+	frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+	frame:RegisterEvent("PLAYER_LOGIN")
 	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
-    frame:RegisterEvent"COMBAT_LOG_EVENT_UNFILTERED"
-    frame:RegisterEvent"UNIT_HEALTH_FREQUENT"
+	frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+	frame:RegisterEvent("UNIT_HEALTH_FREQUENT")
 	if UnitGUID("player") then
 		frame.eventHandlers.PLAYER_LOGIN()
 		frame.eventHandlers:GROUP_ROSTER_UPDATE()
