@@ -44,8 +44,8 @@ function Health:OnEnable(frame)
 		--f:UnregisterEvent("UNIT_HEALTH")
 		LibCLHealth.RegisterCallback(frame, "COMBAT_LOG_HEALTH", function(e, u)
 			if UnitGUID(frame.unit) == UnitGUID(u) then
-				--self:Update(frame)
-				frame:FullUpdate()
+				self:Update(frame)
+				--frame:FullUpdate()
 			end
 		end)
 		--frame:RegisterUnitEvent("COMBAT_LOG_HEALTH", self, "Update")
