@@ -1,4 +1,4 @@
-## Interface: 11305
+## Interface: 11306
 ## Title: Shadowed Unit Frames
 ## Notes: Moooooooooooooooooo
 ## Author: Shadowed
@@ -19,6 +19,7 @@ libs\LibClassicDurations\LibClassicDurations.xml
 libs\LibHealComm-4.0\LibHealComm-4.0.xml
 libs\LibClassicCasterino\LibClassicCasterino.lua
 libs\LibTotemInfo-1.0\embeds.xml
+libs\LibCombatLogHealth-1.0\LibCombatLogHealth-1.0.lua
 #@end-no-lib-strip@
 
 localization\enUS.lua
